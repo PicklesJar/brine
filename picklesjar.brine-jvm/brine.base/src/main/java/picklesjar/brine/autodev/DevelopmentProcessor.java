@@ -1,4 +1,4 @@
-package picklesjar.brine.ut.autodev.core;
+package picklesjar.brine.autodev;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +22,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -30,11 +31,11 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import picklesjar.brine.ut.autodev.core.annotation.Developer;
-import picklesjar.brine.ut.autodev.core.annotation.DevelopmentTrigger;
-import picklesjar.brine.ut.autodev.core.annotation.InjectDevTool;
-import picklesjar.brine.ut.autodev.core.annotation.InjectEnvironment;
-import picklesjar.brine.ut.autodev.core.tools.VelocitySupportTool;
+import picklesjar.brine.autodev.annotation.Developer;
+import picklesjar.brine.autodev.annotation.DevelopmentTrigger;
+import picklesjar.brine.autodev.annotation.InjectDevTool;
+import picklesjar.brine.autodev.annotation.InjectEnvironment;
+import picklesjar.brine.autodev.tools.VelocitySupportTool;
 
 @SupportedSourceVersion( SourceVersion.RELEASE_8 )
 @SupportedAnnotationTypes( { "*" } )
@@ -44,7 +45,7 @@ public class DevelopmentProcessor
 	/**
 	 * 
 	 */
-	protected static final String CONFIGURATION_FILE = "META-INF/picklesjar.brine.ut.autodev/default-config.properties";
+	protected static final String CONFIGURATION_FILE = "META-INF/picklesjar.brine.autodev/config.properties";
 	
 	/**
 	 * 
@@ -131,41 +132,45 @@ public class DevelopmentProcessor
 		boolean[] result = { false };
 		
 		Map< Integer, List< Object > > developerMap = exchangeToPrioriticalMap( createDeveloperSet( annotations, roundEnv ) );
-		developerMap
-			.forEach( ( key, developers ) -> {
-				if( ( developers != null ) && !( developers.isEmpty() ) ) {
-					
-					developers.stream()
-						.filter(
-							( developer ) -> {
-								return developer != null;
-							} )
-						.forEach(
-							( developer ) -> {
-								strBuilder.setLength( 0 );
-								strBuilder.append( developer );
-								strBuilder.append( " will be starting development." );
-								log.debug( strBuilder.toString() );
-								
-								try {
-									if( !result[ 0 ] ) {
-										result[ 0 ] = execute( roundEnv, developer );
-									} else {
-										execute( roundEnv, developer );
+		if( developerMap != null ) {
+			
+			developerMap
+				.forEach( ( key, developers ) -> {
+					if( ( developers != null ) && !( developers.isEmpty() ) ) {
+						
+						developers.stream()
+							.filter(
+								( developer ) -> {
+									return developer != null;
+								} )
+							.forEach(
+								( developer ) -> {
+									strBuilder.setLength( 0 );
+									strBuilder.append( developer );
+									strBuilder.append( " will be starting development." );
+									log.debug( strBuilder.toString() );
+									
+									try {
+										if( !result[ 0 ] ) {
+											result[ 0 ] = execute( roundEnv, developer );
+										} else {
+											execute( roundEnv, developer );
+										}
+									} catch( DevelopmentProcessingException exp ) {
+										throw new IllegalStateException( exp );
 									}
-								} catch( DevelopmentProcessingException exp ) {
-									throw new IllegalStateException( exp );
-								}
-								
-								strBuilder.setLength( 0 );
-								strBuilder.append( "  Finished developer's execution, Now result stat is " );
-								strBuilder.append( result );
-								strBuilder.append( ".\n\n" );
-								log.debug( strBuilder.toString() );
-							} );
-					
-				}
-			} );
+									
+									strBuilder.setLength( 0 );
+									strBuilder.append( "  Finished developer's execution, Now result stat is " );
+									strBuilder.append( result );
+									strBuilder.append( ".\n\n" );
+									log.debug( strBuilder.toString() );
+								} );
+						
+					}
+				} );
+			
+		}
 		
 		return result[ 0 ];
 	}
@@ -180,7 +185,7 @@ public class DevelopmentProcessor
 	protected Set< Object > createDeveloperSet(
 		@Nonnull Set< ? extends TypeElement > annotations, @Nonnull RoundEnvironment roundEnv ) {
 	
-		Set< Object > result = new HashSet< Object >();
+		Set< Object > result = new HashSet<>();
 		
 		// 1. load @Developer annotated Objects.
 		roundEnv.getElementsAnnotatedWith( Developer.class ).stream()
@@ -195,13 +200,16 @@ public class DevelopmentProcessor
 		
 		// 2. load DEVELOPMENT_TRIGGER_CLASS_NAME refer Developer Objects.
 		List< List< ? extends AnnotationMirror > > mirrorsList = new LinkedList<>();
-		annotations.stream()
+		annotations
+			.stream()
 			.filter(
 				( annotation ) -> {
 					return annotation != null;
 				} )
 			.forEach(
 				( annotation ) -> {
+					DevelopmentTrigger[] trigger = ( DevelopmentTrigger[] )annotation
+						.getAnnotationsByType( DevelopmentTrigger.class );
 					mirrorsList.add( annotation.getAnnotationMirrors() );
 				} );
 		mirrorsList.stream()
@@ -214,7 +222,9 @@ public class DevelopmentProcessor
 					
 					mirrors.stream()
 						.filter(
-							( mirror ) -> {
+							( AnnotationMirror mirror ) -> {
+								Map< ? extends ExecutableElement, ? extends AnnotationValue > aaa = mirror.getElementValues();
+								
 								return mirror != null
 									&& mirror.getElementValues() != null
 									&& !( mirror.getElementValues().isEmpty() )

@@ -1,4 +1,4 @@
-package picklesjar.brine.ut.autodev.core.tools;
+package picklesjar.brine.autodev.tools;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -19,7 +19,7 @@ import org.apache.velocity.app.Velocity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import picklesjar.brine.ut.autodev.core.DevelopmentProcessingException;
+import picklesjar.brine.autodev.DevelopmentProcessingException;
 
 public class VelocitySupportTool
 	implements DevelopmentSupportTool {

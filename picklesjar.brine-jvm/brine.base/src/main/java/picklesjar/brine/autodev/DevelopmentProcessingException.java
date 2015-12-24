@@ -1,4 +1,4 @@
-package picklesjar.brine.ut.autodev.core;
+package picklesjar.brine.autodev;
 
 public class DevelopmentProcessingException
 	extends Exception {

@@ -1,4 +1,4 @@
-package picklesjar.brine.ut.autodev.core.annotation;
+package picklesjar.brine.autodev.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -7,10 +7,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention( RetentionPolicy.RUNTIME )
-@Target( value = { ElementType.ANNOTATION_TYPE } )
+@Target( value = { ElementType.FIELD } )
 @Inherited
-public @interface DevelopmentTrigger {
-	
-	public Class< ? > value();
-	
-}
+public @interface InjectEnvironment {}

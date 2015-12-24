@@ -89,16 +89,21 @@
 			<version>${test.cucumber.version}</version>
 		</dependency>
 		
-		<dependency>
-			<groupId>picklesjar</groupId>
-			<artifactId>picklerecipes.ut</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
+			
+			<dependency>
+				<groupId>picklesjar</groupId>
+				<artifactId>picklerecipes.ut</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>picklesjar</groupId>
+				<artifactId>brine.base</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			
 			<!-- Code Utilities -->
 			<dependency>
@@ -144,6 +149,7 @@
 
 	<modules>
 	<module>brine.ut</module>
+	<module>brine.base</module>
 	</modules>
 
 </project>

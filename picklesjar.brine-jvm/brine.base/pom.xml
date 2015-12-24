@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<name>Brine for Java UT Support</name>
+	<name>Brine BASE for Java</name>
 	<description></description>
 	<url>https://github.com/PicklesJar/documents</url>
 
@@ -12,7 +12,7 @@
 		<artifactId>picklesjar.brine-jvm</artifactId>
 		<version>0.1.1</version>
 	</parent>
-	<artifactId>brine.ut</artifactId>
+	<artifactId>brine.base</artifactId>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -38,7 +38,21 @@
 		
 		<dependency>
 			<groupId>picklesjar</groupId>
-			<artifactId>brine.base</artifactId>
+			<artifactId>picklerecipes.ut</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity-tools</artifactId>
 		</dependency>
 		
 	</dependencies>

@@ -1,11 +1,9 @@
-package picklesjar.brine.ut.autodev.core.annotation;
+package picklesjar.brine.autodev;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import picklesjar.brine.ut.autodev.core.DevelopmentPhase;
 
 @Retention( RetentionPolicy.RUNTIME )
 @Target( value = { ElementType.METHOD } )
