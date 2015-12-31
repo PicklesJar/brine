@@ -22,7 +22,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import picklesjar.brine.autodev.annotation.Developer;
+import picklesjar.brine.autodev.annotation.DevelopmentMethod;
 import picklesjar.brine.autodev.annotation.DevelopmentTrigger;
 import picklesjar.brine.autodev.annotation.InjectDevTool;
 import picklesjar.brine.autodev.annotation.InjectEnvironment;
@@ -138,7 +138,8 @@ public class DevelopmentProcessor
 				.forEach( ( key, developers ) -> {
 					if( ( developers != null ) && !( developers.isEmpty() ) ) {
 						
-						developers.stream()
+						developers
+							.stream()
 							.filter(
 								( developer ) -> {
 									return developer != null;
@@ -146,8 +147,13 @@ public class DevelopmentProcessor
 							.forEach(
 								( developer ) -> {
 									strBuilder.setLength( 0 );
+									strBuilder.append( "\n\n\n" );
+									strBuilder.append( "_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/\n" );
 									strBuilder.append( developer );
-									strBuilder.append( " will be starting development." );
+									strBuilder.append( "\n    will be starting development.(priority=" );
+									strBuilder.append( key );
+									strBuilder.append( ")\n" );
+									strBuilder.append( "_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/" );
 									log.debug( strBuilder.toString() );
 									
 									try {
@@ -162,8 +168,8 @@ public class DevelopmentProcessor
 									
 									strBuilder.setLength( 0 );
 									strBuilder.append( "  Finished developer's execution, Now result stat is " );
-									strBuilder.append( result );
-									strBuilder.append( ".\n\n" );
+									strBuilder.append( result[ 0 ] );
+									strBuilder.append( ".\n\n\n" );
 									log.debug( strBuilder.toString() );
 								} );
 						
@@ -208,8 +214,6 @@ public class DevelopmentProcessor
 				} )
 			.forEach(
 				( annotation ) -> {
-					DevelopmentTrigger[] trigger = ( DevelopmentTrigger[] )annotation
-						.getAnnotationsByType( DevelopmentTrigger.class );
 					mirrorsList.add( annotation.getAnnotationMirrors() );
 				} );
 		mirrorsList.stream()
@@ -223,8 +227,6 @@ public class DevelopmentProcessor
 					mirrors.stream()
 						.filter(
 							( AnnotationMirror mirror ) -> {
-								Map< ? extends ExecutableElement, ? extends AnnotationValue > aaa = mirror.getElementValues();
-								
 								return mirror != null
 									&& mirror.getElementValues() != null
 									&& !( mirror.getElementValues().isEmpty() )
@@ -439,57 +441,53 @@ public class DevelopmentProcessor
 			throw new IllegalArgumentException();
 		}
 		
-		if( developer.getClass().getDeclaredAnnotation( Developer.class ) != null ) {
-			
-			Field[] fields = developer.getClass().getDeclaredFields();
-			Arrays.stream( fields )
-				.filter(
-					( field ) -> {
-						field.setAccessible( true );
-						return field.getDeclaredAnnotation( InjectEnvironment.class ) != null
-							|| field.getDeclaredAnnotation( InjectDevTool.class ) != null;
-					} )
-				.forEach(
-					( field ) -> {
-						@Nonnull
-						String fieldTypeName = field.getType().getName();
+		Field[] fields = developer.getClass().getDeclaredFields();
+		Arrays.stream( fields )
+			.filter(
+				( field ) -> {
+					field.setAccessible( true );
+					return field.getDeclaredAnnotation( InjectEnvironment.class ) != null
+						|| field.getDeclaredAnnotation( InjectDevTool.class ) != null;
+				} )
+			.forEach(
+				( field ) -> {
+					@Nonnull
+					String fieldTypeName = field.getType().getName();
+					
+					if( field.getDeclaredAnnotation( InjectEnvironment.class ) != null ) {
 						
-						if( field.getDeclaredAnnotation( InjectEnvironment.class ) != null ) {
+						if( fieldTypeName.equals( ProcessingEnvironment.class.getName() ) ) {
 							
-							if( fieldTypeName.equals( ProcessingEnvironment.class.getName() ) ) {
-								
-								try {
-									field.set( developer, super.processingEnv );
-								} catch( IllegalArgumentException | IllegalAccessException exp ) {
-									throw new IllegalStateException( exp );
-								}
-								
-							} else if( fieldTypeName.equals( RoundEnvironment.class.getName() ) ) {
-								
-								try {
-									field.set( developer, roundEnv );
-								} catch( IllegalArgumentException | IllegalAccessException exp ) {
-									throw new IllegalStateException( exp );
-								}
-								
+							try {
+								field.set( developer, super.processingEnv );
+							} catch( IllegalArgumentException | IllegalAccessException exp ) {
+								throw new IllegalStateException( exp );
 							}
 							
-						} else {
+						} else if( fieldTypeName.equals( RoundEnvironment.class.getName() ) ) {
 							
-							if( fieldTypeName.equals( VelocitySupportTool.class.getName() ) ) {
-								
-								try {
-									field.set( developer, new VelocitySupportTool( processingEnv, config ) );
-								} catch( IllegalArgumentException | IllegalAccessException exp ) {
-									throw new IllegalStateException( exp );
-								}
-								
+							try {
+								field.set( developer, roundEnv );
+							} catch( IllegalArgumentException | IllegalAccessException exp ) {
+								throw new IllegalStateException( exp );
 							}
 							
 						}
-					} );
-			
-		}
+						
+					} else {
+						
+						if( fieldTypeName.equals( VelocitySupportTool.class.getName() ) ) {
+							
+							try {
+								field.set( developer, new VelocitySupportTool( processingEnv, config ) );
+							} catch( IllegalArgumentException | IllegalAccessException exp ) {
+								throw new IllegalStateException( exp );
+							}
+							
+						}
+						
+					}
+				} );
 	}
 	
 	/**
@@ -551,25 +549,23 @@ public class DevelopmentProcessor
 			developers.stream()
 				.filter(
 					( developer ) -> {
-						return developer != null
-							&& developer.getClass().getDeclaredAnnotation( Developer.class ) != null;
+						return developer != null;
 					} )
 				.forEach(
 					( developer ) -> {
+						int priority = 0;
+						Developer developerAnnotation = developer.getClass().getDeclaredAnnotation( Developer.class );
+						if( developerAnnotation != null ) {
+							priority = developerAnnotation.priority();
+						}
 						
-						int priority = developer.getClass().getDeclaredAnnotation( Developer.class ).priority();
 						if( result.containsKey( priority ) ) {
-							
 							result.get( priority ).add( developer );
-							
 						} else {
-							
 							List< Object > developerList = new ArrayList< Object >();
 							developerList.add( developer );
 							result.put( priority, developerList );
-							
 						}
-						
 					} );
 			
 		}
