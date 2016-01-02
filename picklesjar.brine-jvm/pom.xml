@@ -148,7 +148,6 @@
 	</dependencyManagement>
 
 	<modules>
-	<module>brine.ut</module>
 	<module>brine.base</module>
 	</modules>
 
